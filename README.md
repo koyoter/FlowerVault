@@ -1,4 +1,4 @@
-# FlowerVault（获取密码）
+# FlowerVault
 
 一款极简的 Android 密码派生工具：输入主密码 + 站点标识，即点即得 16 位密码并复制到剪贴板。
 

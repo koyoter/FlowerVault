@@ -4,8 +4,8 @@ import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
 /**
- * 密码派生算法，自 PassRestoreX 原样移植（Java -> Kotlin，逐字符等价）。
- * hmacMd5 中的 String.format("%02x", byte) 与原实现保持同一调用形态，保证输出完全一致。
+ * 密码派生算法：HmacMD5(站点标识, 主密码) 三轮变换 + 大小写规则。
+ * hmacMd5 中的 String.format("%02x", byte) 保持固定调用形态，保证输出稳定一致。
  */
 object PwCalc {
 
