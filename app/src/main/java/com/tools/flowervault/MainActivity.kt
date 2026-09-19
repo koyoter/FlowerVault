@@ -67,6 +67,7 @@ import com.tools.flowervault.ui.EntryUi
 import com.tools.flowervault.ui.FlowerVaultTheme
 import com.tools.flowervault.ui.MasterUi
 import com.tools.flowervault.ui.SetupScreen
+import com.tools.flowervault.update.UpdateFlow
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -102,6 +103,9 @@ fun AppRoot(vm: AppViewModel = viewModel()) {
             )
         else -> MainScreen(vm, masters!!, activeId)
     }
+
+    // 应用内更新检测（24h 节流，失败静默）
+    UpdateFlow()
 }
 
 @Composable
