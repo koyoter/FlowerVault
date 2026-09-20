@@ -1,5 +1,6 @@
 package com.tools.flowervault.update
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -28,10 +29,12 @@ import java.io.File
 /**
  * 更新流程：启动 24h 节流后台检查（失败静默）→ 发现新版本弹窗 →
  * 下载（进度条，可取消）→ 安装（首次需系统授权“安装未知应用”）。
+ * manualCheck 值递增时立即主动检查一次（不节流）：
+ * 有新版本弹窗；已是最新或失败则 Toast 提示。
  * 放在根级 Composable 末尾调用一次即可。
  */
 @Composable
-fun UpdateFlow() {
+fun UpdateFlow(manualCheck: Int = 0) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -45,6 +48,22 @@ fun UpdateFlow() {
         if (Updater.shouldCheck(context)) {
             runCatching { Updater.checkForUpdate(context) }
                 .onSuccess { available = it }
+        }
+    }
+
+    // 主动检测（抽屉“检测更新”菜单等入口触发）
+    LaunchedEffect(manualCheck) {
+        if (manualCheck > 0) {
+            runCatching { Updater.checkForUpdate(context) }
+                .onSuccess {
+                    available = it
+                    if (it == null) {
+                        Toast.makeText(context, "已是最新版本", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                .onFailure {
+                    Toast.makeText(context, "检查更新失败：${it.message ?: "未知错误"}", Toast.LENGTH_SHORT).show()
+                }
         }
     }
 

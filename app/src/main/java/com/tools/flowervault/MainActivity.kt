@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.SystemUpdateAlt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
@@ -47,6 +48,7 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -89,6 +91,9 @@ fun AppRoot(vm: AppViewModel = viewModel()) {
     val activeId by vm.activeMasterId.collectAsStateWithLifecycle()
     val showAdd by vm.showAdd.collectAsStateWithLifecycle()
 
+    // 主动检查更新触发计数（抽屉“检测更新”菜单递增）
+    var manualUpdateCheck by remember { mutableIntStateOf(0) }
+
     when {
         // 尚未加载完成：空帧避免设置页闪烁
         masters == null -> Box(Modifier.fillMaxSize())
@@ -101,15 +106,15 @@ fun AppRoot(vm: AppViewModel = viewModel()) {
                 onCreate = { n, p -> vm.addMaster(n, p) },
                 onCancel = { vm.cancelAdd() }
             )
-        else -> MainScreen(vm, masters!!, activeId)
+        else -> MainScreen(vm, masters!!, activeId, onCheckUpdate = { manualUpdateCheck++ })
     }
 
-    // 应用内更新检测（24h 节流，失败静默）
-    UpdateFlow()
+    // 应用内更新检测（24h 节流，失败静默；manualUpdateCheck 主动触发）
+    UpdateFlow(manualCheck = manualUpdateCheck)
 }
 
 @Composable
-fun MainScreen(vm: AppViewModel, masters: List<MasterUi>, activeId: Long?) {
+fun MainScreen(vm: AppViewModel, masters: List<MasterUi>, activeId: Long?, onCheckUpdate: () -> Unit = {}) {
     val drawerState = rememberDrawerState(androidx.compose.material3.DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -179,6 +184,15 @@ fun MainScreen(vm: AppViewModel, masters: List<MasterUi>, activeId: Long?) {
                         scope.launch { drawerState.close() }
                     },
                     icon = { Icon(Icons.Default.Add, contentDescription = null) }
+                )
+                NavigationDrawerItem(
+                    label = { Text("检测更新") },
+                    selected = false,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        onCheckUpdate()
+                    },
+                    icon = { Icon(Icons.Default.SystemUpdateAlt, contentDescription = null) }
                 )
             }
         }
